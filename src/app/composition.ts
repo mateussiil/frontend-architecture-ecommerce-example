@@ -5,9 +5,12 @@ import { RemoveProductFromCartUseCase } from '../modules/cart/application/Remove
 import type { CartRepository } from '../modules/cart/application/CartRepository'
 import { HttpCartRepository } from '../modules/cart/infrastructure/HttpCartRepository'
 import { LocalStorageCartRepository } from '../modules/cart/infrastructure/LocalStorageCartRepository'
+import { createTrpcClient } from '../modules/cart/infrastructure/trpc/createTrpcClient'
+import { TrpcCartRepository } from '../modules/cart/infrastructure/trpc/TrpcCartRepository'
 import { GetProductUseCase } from '../modules/catalog/application/GetProductUseCase'
 import type { ProductRepository } from '../modules/catalog/application/ProductRepository'
 import { SearchProductsUseCase } from '../modules/catalog/application/SearchProductsUseCase'
+import { GraphqlProductRepository } from '../modules/catalog/infrastructure/graphql/GraphqlProductRepository'
 import { HttpProductRepository } from '../modules/catalog/infrastructure/HttpProductRepository'
 import { InMemoryProductRepository } from '../modules/catalog/infrastructure/InMemoryProductRepository'
 import { seedProducts } from '../modules/catalog/infrastructure/seed'
@@ -34,12 +37,20 @@ import { StripePaymentGateway } from '../modules/payment/infrastructure/StripePa
 export function composeApp() {
   const apiUrl = import.meta.env.VITE_API_URL as string | undefined
 
-  const products: ProductRepository = apiUrl
-    ? new HttpProductRepository(apiUrl)
-    : new InMemoryProductRepository(seedProducts)
-  const carts: CartRepository = apiUrl
-    ? new HttpCartRepository(apiUrl)
-    : new LocalStorageCartRepository(window.localStorage)
+  const graphqlUrl = import.meta.env.VITE_GRAPHQL_URL as string | undefined
+  const trpcUrl = import.meta.env.VITE_TRPC_URL as string | undefined
+
+  // Cada módulo pode falar um protocolo diferente. O resto da aplicação não percebe.
+  const products: ProductRepository = graphqlUrl
+    ? new GraphqlProductRepository(graphqlUrl)
+    : apiUrl
+      ? new HttpProductRepository(apiUrl)
+      : new InMemoryProductRepository(seedProducts)
+  const carts: CartRepository = trpcUrl
+    ? new TrpcCartRepository(createTrpcClient(trpcUrl))
+    : apiUrl
+      ? new HttpCartRepository(apiUrl)
+      : new LocalStorageCartRepository(window.localStorage)
   const orders: OrderRepository = apiUrl
     ? new HttpOrderRepository(apiUrl)
     : new LocalStorageOrderRepository(window.localStorage)
