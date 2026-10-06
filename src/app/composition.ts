@@ -2,6 +2,8 @@ import { AddProductToCartUseCase } from '../modules/cart/application/AddProductT
 import { ChangeCartQuantityUseCase } from '../modules/cart/application/ChangeCartQuantityUseCase'
 import { GetCartUseCase } from '../modules/cart/application/GetCartUseCase'
 import { RemoveProductFromCartUseCase } from '../modules/cart/application/RemoveProductFromCartUseCase'
+import type { CartRepository } from '../modules/cart/application/CartRepository'
+import { HttpCartRepository } from '../modules/cart/infrastructure/HttpCartRepository'
 import { LocalStorageCartRepository } from '../modules/cart/infrastructure/LocalStorageCartRepository'
 import { GetProductUseCase } from '../modules/catalog/application/GetProductUseCase'
 import type { ProductRepository } from '../modules/catalog/application/ProductRepository'
@@ -10,12 +12,18 @@ import { HttpProductRepository } from '../modules/catalog/infrastructure/HttpPro
 import { InMemoryProductRepository } from '../modules/catalog/infrastructure/InMemoryProductRepository'
 import { seedProducts } from '../modules/catalog/infrastructure/seed'
 import { CalculateCheckoutUseCase } from '../modules/checkout/application/CalculateCheckoutUseCase'
+import type { CouponRepository } from '../modules/checkout/application/CouponRepository'
 import { PlaceOrderUseCase } from '../modules/checkout/application/PlaceOrderUseCase'
+import type { ShippingOptionRepository } from '../modules/checkout/application/ShippingOptionRepository'
+import { HttpCouponRepository } from '../modules/checkout/infrastructure/HttpCouponRepository'
+import { HttpShippingOptionRepository } from '../modules/checkout/infrastructure/HttpShippingOptionRepository'
 import { InMemoryCouponRepository } from '../modules/checkout/infrastructure/InMemoryCouponRepository'
 import { InMemoryShippingOptionRepository } from '../modules/checkout/infrastructure/InMemoryShippingOptionRepository'
 import { seedCoupons, seedShippingOptions } from '../modules/checkout/infrastructure/seed'
 import { CancelOrderUseCase } from '../modules/order/application/CancelOrderUseCase'
 import { GetOrderUseCase } from '../modules/order/application/GetOrderUseCase'
+import type { OrderRepository } from '../modules/order/application/OrderRepository'
+import { HttpOrderRepository } from '../modules/order/infrastructure/HttpOrderRepository'
 import { LocalStorageOrderRepository } from '../modules/order/infrastructure/LocalStorageOrderRepository'
 import type { PaymentGateway } from '../modules/payment/application/PaymentGateway'
 import { FakePaymentGateway } from '../modules/payment/infrastructure/FakePaymentGateway'
@@ -29,11 +37,19 @@ export function composeApp() {
   const products: ProductRepository = apiUrl
     ? new HttpProductRepository(apiUrl)
     : new InMemoryProductRepository(seedProducts)
+  const carts: CartRepository = apiUrl
+    ? new HttpCartRepository(apiUrl)
+    : new LocalStorageCartRepository(window.localStorage)
+  const orders: OrderRepository = apiUrl
+    ? new HttpOrderRepository(apiUrl)
+    : new LocalStorageOrderRepository(window.localStorage)
+  const coupons: CouponRepository = apiUrl
+    ? new HttpCouponRepository(apiUrl)
+    : new InMemoryCouponRepository(seedCoupons)
+  const shippingOptions: ShippingOptionRepository = apiUrl
+    ? new HttpShippingOptionRepository(apiUrl)
+    : new InMemoryShippingOptionRepository(seedShippingOptions)
   const payments: PaymentGateway = apiUrl ? new StripePaymentGateway(apiUrl) : new FakePaymentGateway()
-  const carts = new LocalStorageCartRepository(window.localStorage)
-  const orders = new LocalStorageOrderRepository(window.localStorage)
-  const coupons = new InMemoryCouponRepository(seedCoupons)
-  const shippingOptions = new InMemoryShippingOptionRepository(seedShippingOptions)
 
   const calculateCheckout = new CalculateCheckoutUseCase(carts, coupons, shippingOptions)
 

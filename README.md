@@ -41,17 +41,17 @@ src/
     ├── cart/
     │   ├── domain/              # Cart: adicionar, remover, alterar quantidade, total
     │   ├── application/         # AddProductToCart, ChangeCartQuantity, RemoveProductFromCart
-    │   ├── infrastructure/      # LocalStorageCartRepository
+    │   ├── infrastructure/      # Http / LocalStorage CartRepository, CartMapper
     │   └── ui/                  # CartPage, CartView
     ├── checkout/
     │   ├── domain/              # Checkout (limite de desconto), Coupon, ShippingOption
     │   ├── application/         # CalculateCheckout, PlaceOrder
-    │   ├── infrastructure/      # cupons e fretes em memória
+    │   ├── infrastructure/      # Http / InMemory Coupon e ShippingOption repositories, mappers
     │   └── ui/                  # CheckoutPage, CheckoutView
     ├── order/
     │   ├── domain/              # Order: status em sequência válida, Address
     │   ├── application/         # OrderRepository, GetOrder, CancelOrder
-    │   ├── infrastructure/      # LocalStorageOrderRepository
+    │   ├── infrastructure/      # Http / LocalStorage OrderRepository, OrderMapper
     │   └── ui/                  # OrderPage, OrderView
     └── payment/
         ├── domain/              # Payment
@@ -75,7 +75,7 @@ Product / Cart           decidem se há estoque e qual é o preço
    ↓
 CartRepository           interface
    ↓
-LocalStorage             infraestrutura
+LocalStorage / HTTP      infraestrutura
 ```
 
 Tentar adicionar 20 unidades de um produto com 5 em estoque é recusado pelo `Cart`, não por um
@@ -99,7 +99,7 @@ Order               pending → paid → confirmed
 
 Por padrão tudo roda sem backend: catálogo, cupons e fretes em memória, carrinho e pedidos no
 `localStorage`, pagamento com `FakePaymentGateway`. Definindo `VITE_API_URL`, o ponto de
-composição passa a usar `HttpProductRepository` e `StripePaymentGateway` — nenhuma linha de
+composição passa a usar os repositórios HTTP e o `StripePaymentGateway` — nenhuma linha de
 domínio, aplicação ou UI muda.
 
 Para testar no app: cupons `BEMVINDO10` e `METADE` (50%, limitado a 30%); cartão terminado em
