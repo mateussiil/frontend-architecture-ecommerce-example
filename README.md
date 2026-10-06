@@ -4,6 +4,9 @@ Exemplo mínimo de uma arquitetura de frontend organizada **por domínio**, com 
 dentro de cada módulo. O app é uma loja com catálogo, carrinho, checkout, pedido e pagamento —
 pequena de propósito, para que a estrutura apareça mais do que o produto.
 
+A ideia por trás deste exemplo está explicada no artigo
+[Frontend como software](https://medium.com/@mateussiil/frontend-como-software-42742e89b416).
+
 Exemplo irmão, com a mesma arquitetura aplicada a um dashboard:
 [frontend-architecture-dashboard-example](https://github.com/mateussiil/frontend-architecture-dashboard-example).
 
