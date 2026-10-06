@@ -36,22 +36,24 @@ src/
     │   ├── domain/              # Product: preço final, desconto, disponibilidade, estoque
     │   ├── application/         # ProductRepository, SearchProducts, GetProduct
     │   ├── infrastructure/      # Http / InMemory ProductRepository, ProductMapper
+│   │   └── graphql/         # GraphqlProductRepository, queries, GraphqlProductMapper
     │   ├── ui/                  # CatalogPage, ProductPage (pontos de entrada), ProductCard
     │   └── testing/             # FakeProductRepository, fixtures
     ├── cart/
     │   ├── domain/              # Cart: adicionar, remover, alterar quantidade, total
     │   ├── application/         # AddProductToCart, ChangeCartQuantity, RemoveProductFromCart
-    │   ├── infrastructure/      # LocalStorageCartRepository
+    │   ├── infrastructure/      # Http / LocalStorage CartRepository, CartMapper
+│   │   └── trpc/            # TrpcCartRepository, createTrpcClient
     │   └── ui/                  # CartPage, CartView
     ├── checkout/
     │   ├── domain/              # Checkout (limite de desconto), Coupon, ShippingOption
     │   ├── application/         # CalculateCheckout, PlaceOrder
-    │   ├── infrastructure/      # cupons e fretes em memória
+    │   ├── infrastructure/      # Http / InMemory Coupon e ShippingOption repositories, mappers
     │   └── ui/                  # CheckoutPage, CheckoutView
     ├── order/
     │   ├── domain/              # Order: status em sequência válida, Address
     │   ├── application/         # OrderRepository, GetOrder, CancelOrder
-    │   ├── infrastructure/      # LocalStorageOrderRepository
+    │   ├── infrastructure/      # Http / LocalStorage OrderRepository, OrderMapper
     │   └── ui/                  # OrderPage, OrderView
     └── payment/
         ├── domain/              # Payment
@@ -75,7 +77,7 @@ Product / Cart           decidem se há estoque e qual é o preço
    ↓
 CartRepository           interface
    ↓
-LocalStorage             infraestrutura
+LocalStorage / HTTP      infraestrutura
 ```
 
 Tentar adicionar 20 unidades de um produto com 5 em estoque é recusado pelo `Cart`, não por um
@@ -98,9 +100,19 @@ Order               pending → paid → confirmed
 ## Trocando a infraestrutura
 
 Por padrão tudo roda sem backend: catálogo, cupons e fretes em memória, carrinho e pedidos no
-`localStorage`, pagamento com `FakePaymentGateway`. Definindo `VITE_API_URL`, o ponto de
-composição passa a usar `HttpProductRepository` e `StripePaymentGateway` — nenhuma linha de
-domínio, aplicação ou UI muda.
+`localStorage`, pagamento com `FakePaymentGateway`. O ponto de composição escolhe outra
+implementação por variável de ambiente — nenhuma linha de domínio, aplicação ou UI muda:
+
+| Variável           | O que troca                                                         |
+| ------------------ | ------------------------------------------------------------------- |
+| `VITE_API_URL`     | todos os repositórios passam para REST e o pagamento para Stripe    |
+| `VITE_GRAPHQL_URL` | o catálogo passa a usar `GraphqlProductRepository`                  |
+| `VITE_TRPC_URL`    | o carrinho passa a usar `TrpcCartRepository` (procedures `cart.get` e `cart.save`) |
+
+Cada módulo pode falar um protocolo diferente: catálogo em GraphQL, carrinho em tRPC e o resto
+em REST, por exemplo. Para o caso de uso, todos são só um `ProductRepository` ou um
+`CartRepository`. Os formatos de cada protocolo ficam nos mappers da própria pasta
+(`GraphqlProductMapper`, `CartMapper`), e o domínio não conhece nenhum deles.
 
 Para testar no app: cupons `BEMVINDO10` e `METADE` (50%, limitado a 30%); cartão terminado em
 `0002` é recusado.
@@ -111,7 +123,7 @@ Para testar no app: cupons `BEMVINDO10` e `METADE` (50%, limitado a 30%); cartã
 | --------------- | ---------------------------------------------------- |
 | Domain          | Vitest puro                                          |
 | Application     | Vitest + repositórios e gateway falsos               |
-| Infrastructure  | Vitest com `localStorage` do jsdom                   |
+| Infrastructure  | Vitest com `localStorage` do jsdom, `fetch` falso (REST/GraphQL) e um servidor tRPC em memória |
 | Componentes     | Vitest + Testing Library com dados falsos            |
 | Fluxo real      | Playwright no browser                                |
 

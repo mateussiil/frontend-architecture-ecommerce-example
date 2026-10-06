@@ -1,5 +1,4 @@
-import type { CouponDTO } from './InMemoryCouponRepository'
-import type { ShippingOptionDTO } from './InMemoryShippingOptionRepository'
+import type { CouponDTO, ShippingOptionDTO } from './CheckoutMappers'
 
 export const seedCoupons: CouponDTO[] = [
   { code: 'BEMVINDO10', percent: 10, minimum_subtotal_cents: 0 },
